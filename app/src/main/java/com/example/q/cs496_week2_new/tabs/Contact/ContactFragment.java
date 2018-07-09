@@ -7,8 +7,15 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.example.q.cs496_week2_new.R;
+
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ContactFragment extends Fragment {
 
@@ -49,6 +56,22 @@ public class ContactFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_contact, container, false);
 
+        ContactClient client = ContactServiceGenerator.createService(ContactClient.class);
+        Call<List<ContactItem>> call = client.getContactLIst();
+
+        call.enqueue(new Callback<List<ContactItem>>() {
+            @Override
+            public void onResponse(Call<List<ContactItem>> call, Response<List<ContactItem>> response) {
+                List<ContactItem> contactItemList = response.body();
+                recyclerView.setAdapter(new ContactAdapter(getActivity(), contactItemList, ContactFragment.this));
+            }
+
+            @Override
+            public void onFailure(Call<List<ContactItem>> call, Throwable t) {
+                Toast.makeText(getActivity(), "ERROR", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         recyclerView = view.findViewById(R.id.recyclerView_contact);
         recyclerView.setHasFixedSize(true);
 
@@ -58,4 +81,9 @@ public class ContactFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+    }
 }

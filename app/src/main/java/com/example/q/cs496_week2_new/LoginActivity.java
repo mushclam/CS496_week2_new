@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static android.Manifest.permission.READ_CONTACTS;
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
 /**
  * A login screen that offers login via email/password.
@@ -122,7 +123,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderManager.Lo
                         }
                     });
         } else {
-            requestPermissions(new String[]{READ_CONTACTS}, REQUEST_READ_CONTACTS);
+            requestPermissions(new String[]{READ_CONTACTS, WRITE_EXTERNAL_STORAGE}, REQUEST_READ_CONTACTS);
         }
         return false;
     }

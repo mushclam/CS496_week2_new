@@ -7,14 +7,15 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ViewHolder> {
 
     private Context mContext;
-    private ArrayList<ContactItem> mContact;
+    private List<ContactItem> mContact;
     private ContactFragment mFragment;
 
-    public ContactAdapter(Context mContext, ArrayList<ContactItem> mContact, ContactFragment mFragment) {
+    public ContactAdapter(Context mContext, List<ContactItem> mContact, ContactFragment mFragment) {
         this.mContext = mContext;
         this.mContact = mContact;
         this.mFragment = mFragment;
