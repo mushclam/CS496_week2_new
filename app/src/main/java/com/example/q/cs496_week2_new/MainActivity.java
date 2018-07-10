@@ -26,6 +26,9 @@ import com.example.q.cs496_week2_new.tabs.Gallery.GalleryFragment;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class MainActivity extends AppCompatActivity {
 
     private SectionsPagerAdapter mSectionsPagerAdapter;

@@ -10,6 +10,12 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="title_activity_login">Sign in</string>
 
+    <!-- Strings related to facebook login-->
+    <string name="facebook_app_id">631950493827724</string>
+    <string name="fb_login_protocol_scheme">fb631950493827724</string>
+
+
+
     <!-- Strings related to login -->
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Password (optional)</string>
