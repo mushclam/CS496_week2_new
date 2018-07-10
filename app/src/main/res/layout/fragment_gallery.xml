@@ -17,28 +17,22 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:visibility="visible">
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/title_shared"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="visible">
+                    android:padding="5dp"
+                    android:text="Shared" />
 
-                    <TextView
-                        android:id="@+id/title_shared"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="5dp"
-                        android:text="Shared" />
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/recyclerView_shared"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
 
-                    <android.support.v7.widget.RecyclerView
-                        android:id="@+id/recyclerView_shared"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                    </android.support.v7.widget.RecyclerView>
-                </LinearLayout>
+                </android.support.v7.widget.RecyclerView>
 
                 <View
                     android:id="@+id/divider2"
@@ -46,27 +40,21 @@
                     android:layout_height="1dp"
                     android:background="?android:attr/listDivider" />
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/title_local"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:padding="5dp"
+                    android:text="Local Image" />
 
-                    <TextView
-                        android:id="@+id/title_local"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="5dp"
-                        android:text="Local Image" />
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/recyclerView_gallery"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1">
 
-                    <android.support.v7.widget.RecyclerView
-                        android:id="@+id/recyclerView_gallery"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1">
-
-                    </android.support.v7.widget.RecyclerView>
-                </LinearLayout>
+                </android.support.v7.widget.RecyclerView>
 
             </LinearLayout>
         </ScrollView>
