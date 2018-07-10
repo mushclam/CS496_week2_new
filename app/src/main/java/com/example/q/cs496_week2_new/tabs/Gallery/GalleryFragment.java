@@ -72,6 +72,9 @@ public class GalleryFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_gallery, container, false);
 
+        GalleryClient client = GalleryServiceGenerator.createService(GalleryClient.class);
+        Call<List<>> call = client.getGalleryList();
+
         textShared = (TextView) view.findViewById(R.id.title_shared);
         textLocal = (TextView) view.findViewById(R.id.title_local);
         if (mSharedImages.isEmpty()) {
