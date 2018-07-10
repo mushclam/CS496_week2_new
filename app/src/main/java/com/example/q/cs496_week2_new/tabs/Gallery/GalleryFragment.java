@@ -1,31 +1,27 @@
 package com.example.q.cs496_week2_new.tabs.Gallery;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.example.q.cs496_week2_new.MainActivity;
 import com.example.q.cs496_week2_new.R;
 import com.example.q.cs496_week2_new.ServiceGenerator;
 import com.google.gson.Gson;
@@ -56,7 +52,7 @@ public class GalleryFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    ArrayList<GalleryItem> mSharedImages = new ArrayList<>();
+    ArrayList<SharedItem> mSharedImages = new ArrayList<>();
     ArrayList<GalleryItem> mImages = new ArrayList<>();
     Hashtable<String, Integer> imageStatus = new Hashtable<>();
 
@@ -69,7 +65,9 @@ public class GalleryFragment extends Fragment {
     RecyclerView.Adapter adapter;
     RecyclerView.LayoutManager layoutManager;
 
-    ViewPager sharedPager;
+    RecyclerView sharedView;
+    RecyclerView.Adapter sharedAdapter;
+    RecyclerView.LayoutManager sharedManager;
 
     SwipeRefreshLayout swipeRefreshLayout;
 
@@ -100,8 +98,6 @@ public class GalleryFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_gallery, container, false);
 
-        checkState();
-
         textShared = (TextView) view.findViewById(R.id.title_shared);
         textLocal = (TextView) view.findViewById(R.id.title_local);
 
@@ -113,13 +109,21 @@ public class GalleryFragment extends Fragment {
         recyclerView.scrollToPosition(0);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
 
+        sharedView = view.findViewById(R.id.recyclerView_shared);
+        sharedView.setHasFixedSize(true);
+
+        sharedManager = new GridLayoutManager(getActivity(), 3);
+        sharedView.setLayoutManager(sharedManager);
+        sharedView.scrollToPosition(0);
+        sharedView.setItemAnimator(new DefaultItemAnimator());
+
         swipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.galleryRefresh);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 new GetGalleryTask().execute();
+                new GetSharedTask().execute();
                 adapter.notifyDataSetChanged();
-                checkState();
                 swipeRefreshLayout.setRefreshing(false);
             }
         });
@@ -127,27 +131,12 @@ public class GalleryFragment extends Fragment {
         return view;
     }
 
-    public static class SharedAdapter extends FragmentPagerAdapter {
-        public SharedAdapter(FragmentManager fm) {
-            super(fm);
-        }
-
-        @Override
-        public Fragment getItem(int position) {
-            return new SharedFragment();
-        }
-
-        @Override
-        public int getCount() {
-            return 1;
-        }
-    }
-
     @Override
     public void onResume() {
         super.onResume();
         if (checkPermission()) {
             new GetGalleryTask().execute();
+            new GetSharedTask().execute();
         }
     }
 
@@ -248,7 +237,81 @@ public class GalleryFragment extends Fragment {
         }
     }
 
+    public class GetSharedTask extends AsyncTask<String, String, ArrayList<SharedItem>> {
+
+        public ArrayList<SharedItem> sharedItemList = new ArrayList<>();
+
+        public GetSharedTask() { }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            try {
+                Gson gson = new Gson();
+                File file = new File(getActivity().getFilesDir() + "/shared.json");
+                if (file.exists()) {
+                    StringBuilder data = new StringBuilder();
+                    FileInputStream fis = getActivity().openFileInput("shared.json");
+                    BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+                    String str = br.readLine();
+                    while (str != null) {
+                        data.append(str).append("\n");
+                        str = br.readLine();
+                    }
+
+                    Log.d("PRE_RESULT", data.toString());
+                    mSharedImages = gson.fromJson(data.toString(), new TypeToken<ArrayList<SharedItem>>(){}.getType());
+                    for (SharedItem sharedItem : mSharedImages) {
+                        imageStatus.put(sharedItem.get_id(), 1);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            sharedAdapter = new SharedAdapter(getActivity(), GalleryFragment.this, mSharedImages);
+            sharedView.setAdapter(sharedAdapter);
+        }
+
+        @Override
+        protected ArrayList<SharedItem> doInBackground(String... strings) {
+            Gson gson = new Gson();
+            try {
+                File galleryCache = new File(getActivity().getFilesDir() + "/shared.json");
+                if (!galleryCache.exists()) {
+                    Log.e("GET_SHARED_TASK", "IN IF");
+                    sharedItemList = getSharedList();
+                    String json = gson.toJson(sharedItemList);
+                    Log.e("Json", json);
+
+                    FileOutputStream fos = getActivity().openFileOutput("shared.json", Context.MODE_PRIVATE);
+                    fos.write(json.getBytes());
+                    fos.flush();
+                    fos.close();
+                } else {
+                    getState();
+
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<SharedItem> sharedItems) {
+            super.onPostExecute(sharedItems);
+            mSharedImages = sharedItemList;
+            sharedAdapter = new SharedAdapter(getActivity(), GalleryFragment.this, mSharedImages);
+            sharedView.setAdapter(sharedAdapter);
+        }
+    }
+
     private void getState() {
+
+        List<String> requestIds = new ArrayList<>();
 
         GalleryClient client = ServiceGenerator.createService(GalleryClient.class);
         Call<GalleryState> call = client.getStateList();
@@ -257,6 +320,7 @@ public class GalleryFragment extends Fragment {
             @Override
             public void onResponse(Call<GalleryState> call, Response<GalleryState> response) {
                 galleryState = response.body();
+
                 if(galleryState != null){
                     String[] imageIds = galleryState.getImages();
                     String[] openIds = galleryState.getOpenImages();
@@ -264,8 +328,7 @@ public class GalleryFragment extends Fragment {
                     if (imageIds.length != 0) {
                         for (String id : imageIds) {
                             if (imageStatus.get(id) == null) {
-                                Log.e("STATUS", "NO EXIST IN LOCAL");
-//                                getImage();
+
                             }
                         }
                     }
@@ -274,12 +337,58 @@ public class GalleryFragment extends Fragment {
 
             @Override
             public void onFailure(Call<GalleryState> call, Throwable t) {
-                Toast.makeText(getActivity(), "ERROR: Check State", Toast.LENGTH_SHORT).show();
+                Log.e("SERVER", "No Response for getState");
             }
         });
     }
 
-    private void checkState() {
-        getState();
+    private ArrayList<SharedItem> getSharedList() {
+
+        Hashtable<String, Integer> imageState = new Hashtable<>();
+        ArrayList<SharedItem> sharedItemList = new ArrayList<>();
+
+        GalleryClient client = ServiceGenerator.createService(GalleryClient.class);
+        Call<List<BaseItem>> call = client.getSharedList();
+
+        try {
+            List<BaseItem> baseItemList = call.execute().body();
+
+            for (BaseItem item : baseItemList) {
+                Gson gson = new Gson();
+                String _id = item.get_id();
+                String encodedBase = item.getBase64();
+                byte[] decodedBase = Base64.decode(encodedBase, Base64.DEFAULT);
+                Bitmap decodedBitmap = BitmapFactory.decodeByteArray(decodedBase, 0, decodedBase.length);
+
+                String path = saveCacheImage(_id, decodedBitmap);
+
+                SharedItem sharedItem = new SharedItem(_id, path);
+                sharedItemList.add(sharedItem);
+                String tojson = gson.toJson(sharedItemList);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return sharedItemList;
+    }
+
+    public String saveCacheImage(String _id, Bitmap bitmap) {
+        String imagePath = null;
+        try {
+            String filename = _id + ".png";
+            Log.e("CACHE_NAME", filename);
+            FileOutputStream fos = getActivity().openFileOutput(filename, Context.MODE_PRIVATE);
+            imagePath = getActivity().getFileStreamPath(filename).getPath();
+            Log.e("CACHE_PATH", imagePath);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            fos.flush();
+            fos.close();
+            getActivity().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE));
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            return imagePath;
+        }
     }
 }

@@ -5,11 +5,13 @@ import java.util.List;
 import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
-import retrofit2.http.Query;
 
 public interface GalleryClient {
     @GET("/gallery/getState/")
     Call<GalleryState> getStateList();
+
+    @GET("/gallery")
+    Call<List<BaseItem>> getSharedList();
 
     @POST("/gallery")
     Call<GalleryItem> postGalleryList(
