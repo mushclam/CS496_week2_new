@@ -137,19 +137,17 @@ public class LoginActivity extends AppCompatActivity  {
                             // App code
                         }
                     });
-
+            loginButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (AccessToken.getCurrentAccessToken() == null)
+                        Toast.makeText(getApplicationContext(), "Logged out", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
         else{
             setContentView(R.layout.activity_main);
-            /*
-            Profile profile = Profile.getCurrentProfile();
-            nextActivity(profile);
-            Intent main2 = new Intent(LoginActivity.this, UserProfile.class);
-            main2.putExtra("name", profile.getFirstName());
-            main2.putExtra("surname", profile.getLastName());
-            main2.putExtra("imageUrl", profile.getProfilePictureUri(200,200).toString());
-            main2.putExtra("id",profile.getId());
-            startActivity(main2);   */
+
         }
 
 
