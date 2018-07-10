@@ -10,47 +10,67 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <LinearLayout
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
-
-            <View
-                android:id="@+id/divider2"
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="?android:attr/listDivider" />
+            android:layout_height="match_parent">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/title_local"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="5dp"
-                    android:text="Local Image" />
+                    android:orientation="vertical"
+                    android:visibility="visible">
 
-                <android.support.v7.widget.RecyclerView
-                    android:id="@+id/recyclerView_gallery"
+                    <TextView
+                        android:id="@+id/title_shared"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="5dp"
+                        android:text="Shared" />
+
+                    <android.support.v7.widget.RecyclerView
+                        android:id="@+id/recyclerView_shared"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                    </android.support.v7.widget.RecyclerView>
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/divider2"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1">
+                    android:layout_height="1dp"
+                    android:background="?android:attr/listDivider" />
 
-                </android.support.v7.widget.RecyclerView>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/title_local"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="5dp"
+                        android:text="Local Image" />
+
+                    <android.support.v7.widget.RecyclerView
+                        android:id="@+id/recyclerView_gallery"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1">
+
+                    </android.support.v7.widget.RecyclerView>
+                </LinearLayout>
+
             </LinearLayout>
-
-        </LinearLayout>
+        </ScrollView>
 
     </android.support.v4.widget.SwipeRefreshLayout>
-
-    <android.support.v4.view.ViewPager
-        android:id="@+id/sharedPager"
-        android:layout_width="match_parent"
-        android:layout_height="250dp"
-        android:layout_alignParentBottom="true" />
 
 </RelativeLayout>

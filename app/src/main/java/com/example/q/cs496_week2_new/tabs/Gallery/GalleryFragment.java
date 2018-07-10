@@ -100,12 +100,6 @@ public class GalleryFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_gallery, container, false);
 
-        sharedPager = view.findViewById(R.id.sharedPager);
-        sharedPager.setAdapter(new SharedAdapter(getChildFragmentManager()));
-
-        FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
-        transaction.add(R.id.sharedPager, new SharedFragment()).commit();
-
         checkState();
 
         textShared = (TextView) view.findViewById(R.id.title_shared);
