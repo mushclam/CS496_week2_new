@@ -47,8 +47,8 @@ public class UserProfile extends AppCompatActivity {
         TextView nameView = (TextView) findViewById(R.id.nameAndSurname);
         nameView.setText("" + name + " " + surname);
 
-        Button logout = (Button) findViewById(R.id.start);
-        logout.setOnClickListener(new View.OnClickListener(){
+        Button start = (Button) findViewById(R.id.start);
+        start.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
                 Intent login = new Intent(UserProfile.this, MainActivity.class);

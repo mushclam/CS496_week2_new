@@ -7,6 +7,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -22,6 +24,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -32,6 +35,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -49,10 +53,12 @@ import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.facebook.appevents.AppEventsLogger;
 import com.facebook.FacebookSdk;
+import com.facebook.share.widget.ShareDialog;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -75,13 +81,6 @@ public class LoginActivity extends AppCompatActivity  {
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getApplicationContext());
         AppEventsLogger.activateApp(this);
-        setContentView(R.layout.activity_login);
-        textView = findViewById(R.id.textView);
-
-
-        loginButton = (LoginButton) findViewById(R.id.login_button);
-        loginButton.setReadPermissions(Arrays.asList("email"));
-
         callbackManager = CallbackManager.Factory.create();
         accessTokenTracker = new AccessTokenTracker() {
             @Override
@@ -97,48 +96,64 @@ public class LoginActivity extends AppCompatActivity  {
         accessTokenTracker.startTracking();
         profileTracker.startTracking();
 
+        if (AccessToken.getCurrentAccessToken() == null) {
+            setContentView(R.layout.activity_login);
 
-        LoginManager.getInstance().registerCallback(callbackManager,
-                new FacebookCallback<LoginResult>() {
-                    @Override
-                    public void onSuccess(LoginResult loginResult) {
-                        GraphRequest.newMeRequest(
-                                loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
-                                    @Override
-                                    public void onCompleted(JSONObject me, GraphResponse response) {
-                                        if (response.getError() != null) {
+            textView = findViewById(R.id.textView);
+
+            loginButton = (LoginButton) findViewById(R.id.login_button);
+            loginButton.setReadPermissions(Arrays.asList("email"));
+
+            LoginManager.getInstance().registerCallback(callbackManager,
+                    new FacebookCallback<LoginResult>() {
+                        @Override
+                        public void onSuccess(LoginResult loginResult) {
+                            GraphRequest.newMeRequest(
+                                    loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
+                                        @Override
+                                        public void onCompleted(JSONObject me, GraphResponse response) {
+                                            if (response.getError() != null) {
+                                            } else {
+                                                String email = me.optString("email");
+                                                String id = me.optString("id");
+                                            }
                                         }
-                                        else {
-                                            String email =me.optString("email");
-                                            String id = me.optString("id");
-                                        }
-                                    }
-                                }).executeAsync();
+                                    }).executeAsync();
 
 
-                        Profile profile = Profile.getCurrentProfile();
-                        nextActivity(profile);
-                        Toast.makeText(getApplicationContext(), "Logging in...", Toast.LENGTH_SHORT).show();
+                            Profile profile = Profile.getCurrentProfile();
+                            nextActivity(profile);
+                            Toast.makeText(getApplicationContext(), "Logging in...", Toast.LENGTH_SHORT).show();
 
-                    }
+                        }
 
-                    @Override
-                    public void onCancel() {
-                        Toast.makeText(getApplicationContext(), "Login Canceled", Toast.LENGTH_SHORT).show();
-                    }
+                        @Override
+                        public void onCancel() {
+                            Toast.makeText(getApplicationContext(), "Login Canceled", Toast.LENGTH_SHORT).show();
+                        }
 
-                    @Override
-                    public void onError(FacebookException exception) {
-                        // App code
-                    }
-                });
-        loginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (AccessToken.getCurrentAccessToken() == null)
-                    Toast.makeText(getApplicationContext(), "Logged out", Toast.LENGTH_SHORT).show();
-            }
-        });
+                        @Override
+                        public void onError(FacebookException exception) {
+                            // App code
+                        }
+                    });
+
+        }
+        else{
+            setContentView(R.layout.activity_main);
+            /*
+            Profile profile = Profile.getCurrentProfile();
+            nextActivity(profile);
+            Intent main2 = new Intent(LoginActivity.this, UserProfile.class);
+            main2.putExtra("name", profile.getFirstName());
+            main2.putExtra("surname", profile.getLastName());
+            main2.putExtra("imageUrl", profile.getProfilePictureUri(200,200).toString());
+            main2.putExtra("id",profile.getId());
+            startActivity(main2);   */
+        }
+
+
+
     }
 
 
@@ -146,6 +161,32 @@ public class LoginActivity extends AppCompatActivity  {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         callbackManager.onActivityResult(requestCode, resultCode, data);
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    public class DownloadImage extends AsyncTask<String, Void, Bitmap> {
+        ImageView bmImage;
+
+        public DownloadImage(ImageView bmImage){
+            this.bmImage = bmImage;
+        }
+
+        protected Bitmap doInBackground(String... urls){
+            String urldisplay = urls[0];
+            Bitmap mIcon11 = null;
+            try{
+                InputStream in = new java.net.URL(urldisplay).openStream();
+                mIcon11 = BitmapFactory.decodeStream(in);
+            }catch (Exception e){
+                Log.e("Error", e.getMessage());
+                e.printStackTrace();
+            }
+            return mIcon11;
+        }
+
+        protected void onPostExecute(Bitmap result){
+            bmImage.setImageBitmap(result);
+        }
+
     }
 
     private void nextActivity(Profile profile){
