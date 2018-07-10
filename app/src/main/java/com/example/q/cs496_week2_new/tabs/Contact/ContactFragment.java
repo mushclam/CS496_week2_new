@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.example.q.cs496_week2_new.R;
+import com.example.q.cs496_week2_new.ServiceGenerator;
 
 import java.util.List;
 
@@ -56,27 +57,30 @@ public class ContactFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_contact, container, false);
 
-        ContactClient client = ContactServiceGenerator.createService(ContactClient.class);
-        Call<List<ContactItem>> call = client.getContactLIst();
+//        ContactClient client = ServiceGenerator.createService(ContactClient.class);
+//        Call<List<ContactItem>> call = client.getContactLIst();
 
-        call.enqueue(new Callback<List<ContactItem>>() {
-            @Override
-            public void onResponse(Call<List<ContactItem>> call, Response<List<ContactItem>> response) {
-                List<ContactItem> contactItemList = response.body();
-                recyclerView.setAdapter(new ContactAdapter(getActivity(), contactItemList, ContactFragment.this));
-            }
-
-            @Override
-            public void onFailure(Call<List<ContactItem>> call, Throwable t) {
-                Toast.makeText(getActivity(), "ERROR", Toast.LENGTH_SHORT).show();
-            }
-        });
+//        call.enqueue(new Callback<List<ContactItem>>() {
+//            @Override
+//            public void onResponse(Call<List<ContactItem>> call, Response<List<ContactItem>> response) {
+//                List<ContactItem> contactItemList = response.body();
+//                recyclerView.setAdapter(new ContactAdapter(getActivity(), contactItemList, ContactFragment.this));
+//            }
+//
+//            @Override
+//            public void onFailure(Call<List<ContactItem>> call, Throwable t) {
+//                Toast.makeText(getActivity(), "ERROR", Toast.LENGTH_SHORT).show();
+//            }
+//        });
 
         recyclerView = view.findViewById(R.id.recyclerView_contact);
         recyclerView.setHasFixedSize(true);
 
         layoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(layoutManager);
+
+        adapter = new ContactAdapter(getActivity(), null, ContactFragment.this);
+        recyclerView.setAdapter(adapter);
 
         return view;
     }

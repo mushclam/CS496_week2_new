@@ -4,6 +4,8 @@ public class ContactItem {
     private String _id;
     private String profile;
     private String nickname;
+    private String phoneNumber;
+    private String emailAddress;
 
     public ContactItem() {
     }
@@ -18,5 +20,13 @@ public class ContactItem {
 
     public String getNickname() {
         return nickname;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public String getEmailAddress() {
+        return emailAddress;
     }
 }

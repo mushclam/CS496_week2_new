@@ -1,10 +1,10 @@
-package com.example.q.cs496_week2_new.tabs.Gallery;
+package com.example.q.cs496_week2_new;
 
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class GalleryServiceGenerator {
+public class ServiceGenerator {
 
     private static final String BASE_URL = "http://52.231.69.137:8080";
     private static OkHttpClient.Builder httpClient = new OkHttpClient.Builder();

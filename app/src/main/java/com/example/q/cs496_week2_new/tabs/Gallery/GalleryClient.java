@@ -8,8 +8,8 @@ import retrofit2.http.POST;
 import retrofit2.http.Query;
 
 public interface GalleryClient {
-    @GET("/gallery")
-    Call<List<GalleryItem>> getGalleryList();
+    @GET("/gallery/getState/")
+    Call<GalleryState> getStateList();
 
     @POST("/gallery")
     Call<GalleryItem> postGalleryList(

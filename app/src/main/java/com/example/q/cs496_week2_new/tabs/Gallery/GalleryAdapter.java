@@ -1,6 +1,7 @@
 package com.example.q.cs496_week2_new.tabs.Gallery;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -43,7 +44,11 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
     @Override
     public int getItemCount() {
-        return mImages.size();
+        if (mImages.isEmpty()) {
+            return 0;
+        } else {
+            return mImages.size();
+        }
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -61,7 +66,10 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
         @Override
         public void onClick(View view) {
-
+            Intent intent = new Intent(mContext, ViewActivity.class);
+            intent.putExtra("index", getLayoutPosition());
+            intent.putExtra("images", mImages);
+            mContext.startActivity(intent);
         }
     }
 }

@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
@@ -17,11 +18,27 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.example.q.cs496_week2_new.MainActivity;
 import com.example.q.cs496_week2_new.R;
+import com.example.q.cs496_week2_new.ServiceGenerator;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
@@ -39,9 +56,14 @@ public class GalleryFragment extends Fragment {
     TextView textShared;
     TextView textLocal;
 
+    GalleryState galleryState;
+
     RecyclerView recyclerView;
     RecyclerView.Adapter adapter;
     RecyclerView.LayoutManager layoutManager;
+
+    ViewPager viewPager;
+    MainActivity.SectionsPagerAdapter mSectionsPagerAdapter;
 
     SwipeRefreshLayout swipeRefreshLayout;
 
@@ -72,13 +94,19 @@ public class GalleryFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_gallery, container, false);
 
-        GalleryClient client = GalleryServiceGenerator.createService(GalleryClient.class);
-        Call<List<>> call = client.getGalleryList();
+        checkState();
 
         textShared = (TextView) view.findViewById(R.id.title_shared);
         textLocal = (TextView) view.findViewById(R.id.title_local);
         if (mSharedImages.isEmpty()) {
             textShared.setVisibility(View.GONE);
+        } else {
+            textShared.setVisibility(View.VISIBLE);
+        }
+        if (mImages.isEmpty()) {
+            textLocal.setVisibility(View.GONE);
+        } else {
+            textLocal.setVisibility(View.VISIBLE);
         }
 
         recyclerView = view.findViewById(R.id.recyclerView_gallery);
@@ -94,6 +122,8 @@ public class GalleryFragment extends Fragment {
             @Override
             public void onRefresh() {
                 new GetGalleryTask().execute();
+                adapter.notifyDataSetChanged();
+                checkState();
                 swipeRefreshLayout.setRefreshing(false);
             }
         });
@@ -117,6 +147,34 @@ public class GalleryFragment extends Fragment {
     public class GetGalleryTask extends AsyncTask<String, String, ArrayList<GalleryItem>> {
 
         @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            try {
+                Gson gson = new Gson();
+                File file = new File(getActivity().getFilesDir() + "/gallery.json");
+                if (file.exists()) {
+                    StringBuilder data = new StringBuilder();
+                    FileInputStream fis = getActivity().openFileInput("gallery.json");
+                    BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+                    String str = br.readLine();
+                    while (str != null) {
+                        data.append(str).append("\n");
+                        str = br.readLine();
+                    }
+
+                    Log.d("PRE_RESULT", data.toString());
+                    mImages = gson.fromJson(data.toString(), new TypeToken<ArrayList<GalleryItem>>(){}.getType());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            adapter = new GalleryAdapter(getActivity(), GalleryFragment.this, mImages);
+            recyclerView.setAdapter(adapter);
+        }
+
+        @Override
         protected ArrayList<GalleryItem> doInBackground(String... strings) {
             return fetchAllImages();
         }
@@ -131,6 +189,7 @@ public class GalleryFragment extends Fragment {
 
         private ArrayList<GalleryItem> fetchAllImages() {
             // DATA는 이미지 파일의 스트림 데이터 경로를 나타냅니다.
+            Gson gson = new Gson();
             String[] projection = {MediaStore.Images.Media.DATA, MediaStore.Images.Media.DATE_TAKEN,
                     MediaStore.Images.Media.LONGITUDE, MediaStore.Images.Media.LATITUDE};
 
@@ -161,10 +220,47 @@ public class GalleryFragment extends Fragment {
                 imageCursor.close();
 
                 Collections.sort(result, Collections.reverseOrder());
+                String json = gson.toJson(result);
+
+                try {
+                    FileOutputStream fos = getActivity().openFileOutput("gallery.json", Context.MODE_PRIVATE);
+                    fos.write(json.getBytes());
+                    fos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                 return result;
             }
             return null;
         }
     }
 
+    private void getState() {
+
+        GalleryClient client = ServiceGenerator.createService(GalleryClient.class);
+        Call<GalleryState> call = client.getStateList();
+
+        call.enqueue(new Callback<GalleryState>() {
+            @Override
+            public void onResponse(Call<GalleryState> call, Response<GalleryState> response) {
+                galleryState = response.body();
+                if(galleryState != null){
+                    String[] imageIds = galleryState.getImages();
+                    String[] openIds = galleryState.getOpenImages();
+
+                    Log.e("IDs", imageIds[0]);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<GalleryState> call, Throwable t) {
+                Toast.makeText(getActivity(), "ERROR: Check State", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void checkState() {
+        getState();
+    }
 }
