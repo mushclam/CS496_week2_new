@@ -260,7 +260,7 @@ public class GalleryFragment extends Fragment {
                         str = br.readLine();
                     }
 
-                    Log.d("PRE_RESULT", data.toString());
+                    Log.e("PRE_RESULT", data.toString());
                     mSharedImages = gson.fromJson(data.toString(), new TypeToken<ArrayList<SharedItem>>(){}.getType());
                     for (SharedItem sharedItem : mSharedImages) {
                         imageStatus.put(sharedItem.get_id(), 1);
@@ -282,17 +282,12 @@ public class GalleryFragment extends Fragment {
                 if (!galleryCache.exists()) {
                     Log.e("GET_SHARED_TASK", "IN IF");
                     sharedItemList = getSharedList();
-                    String json = gson.toJson(sharedItemList);
-                    Log.e("Json", json);
-
-                    FileOutputStream fos = getActivity().openFileOutput("shared.json", Context.MODE_PRIVATE);
-                    fos.write(json.getBytes());
-                    fos.flush();
-                    fos.close();
                 } else {
-                    getState();
-
+                    List<String> requestIds = getState();
+                    List<SharedItem> updateList = getUpdate(requestIds);
+                    sharedItemList.addAll(updateList);
                 }
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -303,43 +298,86 @@ public class GalleryFragment extends Fragment {
         @Override
         protected void onPostExecute(ArrayList<SharedItem> sharedItems) {
             super.onPostExecute(sharedItems);
-            mSharedImages = sharedItemList;
+            Gson gson = new Gson();
+            mSharedImages.addAll(sharedItemList);
+            try {
+                String json = gson.toJson(mSharedImages);
+                Log.e("Json", json);
+
+                FileOutputStream fos = getActivity().openFileOutput("shared.json", Context.MODE_PRIVATE);
+                fos.write(json.getBytes());
+                fos.flush();
+                fos.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             sharedAdapter = new SharedAdapter(getActivity(), GalleryFragment.this, mSharedImages);
             sharedView.setAdapter(sharedAdapter);
         }
     }
 
-    private void getState() {
+    private List<String> getState() {
 
         List<String> requestIds = new ArrayList<>();
 
         GalleryClient client = ServiceGenerator.createService(GalleryClient.class);
         Call<GalleryState> call = client.getStateList();
 
-        call.enqueue(new Callback<GalleryState>() {
-            @Override
-            public void onResponse(Call<GalleryState> call, Response<GalleryState> response) {
-                galleryState = response.body();
+        Gson gson = new Gson();
+        try {
+            galleryState = call.execute().body();
 
-                if(galleryState != null){
-                    String[] imageIds = galleryState.getImages();
-                    String[] openIds = galleryState.getOpenImages();
+            if(galleryState != null){
+                String[] imageIds = galleryState.getImages();
+                String[] openIds = galleryState.getOpenImages();
 
-                    if (imageIds.length != 0) {
-                        for (String id : imageIds) {
-                            if (imageStatus.get(id) == null) {
-
-                            }
+                if (imageIds.length != 0) {
+                    for (String id : imageIds) {
+                        if (imageStatus.get(id) == null) {
+                            requestIds.add(id);
                         }
                     }
                 }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String json = gson.toJson(requestIds);
+        Log.e("STATE", json);
 
-            @Override
-            public void onFailure(Call<GalleryState> call, Throwable t) {
-                Log.e("SERVER", "No Response for getState");
+        return requestIds;
+    }
+
+    private ArrayList<SharedItem> getUpdate(List<String> state) {
+        ArrayList<SharedItem> sharedItemList = new ArrayList<>();
+        Gson gson = new Gson();
+
+        GalleryClient client = ServiceGenerator.createService(GalleryClient.class);
+        Call<List<BaseItem>> call = client.getUpdateList(state);
+
+
+        try {
+
+            List<BaseItem> updateList = call.execute().body();
+            if (!updateList.isEmpty()) {
+                for (BaseItem item : updateList) {
+                    String _id = item.get_id();
+                    String encodedBase = item.getBase64();
+                    byte[] decodedBase = Base64.decode(encodedBase, Base64.DEFAULT);
+                    Bitmap decodedBitmap = BitmapFactory.decodeByteArray(decodedBase, 0, decodedBase.length);
+
+                    String path = saveCacheImage(_id, decodedBitmap);
+
+                    SharedItem sharedItem = new SharedItem(_id, path);
+                    sharedItemList.add(sharedItem);
+                }
             }
-        });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        String json = gson.toJson(sharedItemList);
+        Log.e("UPDATE", json);
+        return sharedItemList;
     }
 
     private ArrayList<SharedItem> getSharedList() {
@@ -364,7 +402,6 @@ public class GalleryFragment extends Fragment {
 
                 SharedItem sharedItem = new SharedItem(_id, path);
                 sharedItemList.add(sharedItem);
-                String tojson = gson.toJson(sharedItemList);
             }
         } catch (IOException e) {
             e.printStackTrace();
