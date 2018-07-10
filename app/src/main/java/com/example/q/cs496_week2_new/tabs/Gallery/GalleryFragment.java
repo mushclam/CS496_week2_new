@@ -6,7 +6,12 @@ import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -34,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Hashtable;
 import java.util.List;
 
 import retrofit2.Call;
@@ -52,6 +58,7 @@ public class GalleryFragment extends Fragment {
 
     ArrayList<GalleryItem> mSharedImages = new ArrayList<>();
     ArrayList<GalleryItem> mImages = new ArrayList<>();
+    Hashtable<String, Integer> imageStatus = new Hashtable<>();
 
     TextView textShared;
     TextView textLocal;
@@ -62,8 +69,7 @@ public class GalleryFragment extends Fragment {
     RecyclerView.Adapter adapter;
     RecyclerView.LayoutManager layoutManager;
 
-    ViewPager viewPager;
-    MainActivity.SectionsPagerAdapter mSectionsPagerAdapter;
+    ViewPager sharedPager;
 
     SwipeRefreshLayout swipeRefreshLayout;
 
@@ -94,20 +100,16 @@ public class GalleryFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_gallery, container, false);
 
+        sharedPager = view.findViewById(R.id.sharedPager);
+        sharedPager.setAdapter(new SharedAdapter(getChildFragmentManager()));
+
+        FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
+        transaction.add(R.id.sharedPager, new SharedFragment()).commit();
+
         checkState();
 
         textShared = (TextView) view.findViewById(R.id.title_shared);
         textLocal = (TextView) view.findViewById(R.id.title_local);
-        if (mSharedImages.isEmpty()) {
-            textShared.setVisibility(View.GONE);
-        } else {
-            textShared.setVisibility(View.VISIBLE);
-        }
-        if (mImages.isEmpty()) {
-            textLocal.setVisibility(View.GONE);
-        } else {
-            textLocal.setVisibility(View.VISIBLE);
-        }
 
         recyclerView = view.findViewById(R.id.recyclerView_gallery);
         recyclerView.setHasFixedSize(true);
@@ -129,6 +131,22 @@ public class GalleryFragment extends Fragment {
         });
 
         return view;
+    }
+
+    public static class SharedAdapter extends FragmentPagerAdapter {
+        public SharedAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return new SharedFragment();
+        }
+
+        @Override
+        public int getCount() {
+            return 1;
+        }
     }
 
     @Override
@@ -249,7 +267,14 @@ public class GalleryFragment extends Fragment {
                     String[] imageIds = galleryState.getImages();
                     String[] openIds = galleryState.getOpenImages();
 
-                    Log.e("IDs", imageIds[0]);
+                    if (imageIds.length != 0) {
+                        for (String id : imageIds) {
+                            if (imageStatus.get(id) == null) {
+                                Log.e("STATUS", "NO EXIST IN LOCAL");
+//                                getImage();
+                            }
+                        }
+                    }
                 }
             }
 
