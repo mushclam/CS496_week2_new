@@ -40,12 +40,12 @@ public class SharedAdapter extends RecyclerView.Adapter<SharedAdapter.ViewHolder
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         final SharedItem mImage = mImages.get(position);
-//        Glide.with(mContext)
-//                .load(mImage.getFile())
-//                .thumbnail(0.5f)
-//                .skipMemoryCache(true)
-//                .diskCacheStrategy(DiskCacheStrategy.ALL)
-//                .into(holder.imageView);
+        Glide.with(mContext)
+                .load(mImage.getFile())
+                .thumbnail(0.5f)
+                .skipMemoryCache(true)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(holder.imageView);
     }
 
     @Override

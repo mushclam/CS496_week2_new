@@ -1,5 +1,6 @@
 package com.example.q.cs496_week2_new.tabs.Gallery;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -101,14 +102,15 @@ public class GalleryFragment extends Fragment {
 
         textShared = (TextView) view.findViewById(R.id.title_shared);
         textLocal = (TextView) view.findViewById(R.id.title_local);
+        textLocal.setVisibility(View.GONE);
 
-        recyclerView = view.findViewById(R.id.recyclerView_gallery);
-        recyclerView.setHasFixedSize(true);
-
-        layoutManager = new GridLayoutManager(getActivity(), 3);
-        recyclerView.setLayoutManager(layoutManager);
-        recyclerView.scrollToPosition(0);
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
+//        recyclerView = view.findViewById(R.id.recyclerView_gallery);
+//        recyclerView.setHasFixedSize(true);
+//
+//        layoutManager = new GridLayoutManager(getActivity(), 3);
+//        recyclerView.setLayoutManager(layoutManager);
+//        recyclerView.scrollToPosition(0);
+//        recyclerView.setItemAnimator(new DefaultItemAnimator());
 
         sharedView = view.findViewById(R.id.recyclerView_shared);
         sharedView.setHasFixedSize(true);
@@ -122,9 +124,9 @@ public class GalleryFragment extends Fragment {
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                new GetGalleryTask().execute();
+//                new GetGalleryTask().execute();
                 new GetSharedTask().execute();
-                adapter.notifyDataSetChanged();
+//                adapter.notifyDataSetChanged();
                 swipeRefreshLayout.setRefreshing(false);
             }
         });
@@ -136,7 +138,7 @@ public class GalleryFragment extends Fragment {
     public void onResume() {
         super.onResume();
         if (checkPermission()) {
-            new GetGalleryTask().execute();
+//            new GetGalleryTask().execute();
             new GetSharedTask().execute();
         }
     }
@@ -152,28 +154,27 @@ public class GalleryFragment extends Fragment {
         protected void onPreExecute() {
             super.onPreExecute();
 
-            try {
-                Gson gson = new Gson();
-                File file = new File(getActivity().getFilesDir() + "/gallery.json");
-                if (file.exists()) {
-                    StringBuilder data = new StringBuilder();
-                    FileInputStream fis = getActivity().openFileInput("gallery.json");
-                    BufferedReader br = new BufferedReader(new InputStreamReader(fis));
-                    String str = br.readLine();
-                    while (str != null) {
-                        data.append(str).append("\n");
-                        str = br.readLine();
-                    }
-
-                    Log.d("PRE_RESULT", data.toString());
-                    mImages = gson.fromJson(data.toString(), new TypeToken<ArrayList<GalleryItem>>(){}.getType());
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            adapter = new GalleryAdapter(getActivity(), GalleryFragment.this, mImages);
-            recyclerView.setAdapter(adapter);
+//            try {
+//                Gson gson = new Gson();
+//                File file = new File(getActivity().getFilesDir() + "/gallery.json");
+//                if (file.exists()) {
+//                    StringBuilder data = new StringBuilder();
+//                    FileInputStream fis = getActivity().openFileInput("gallery.json");
+//                    BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+//                    String str = br.readLine();
+//                    while (str != null) {
+//                        data.append(str).append("\n");
+//                        str = br.readLine();
+//                    }
+//
+//                    mImages = gson.fromJson(data.toString(), new TypeToken<ArrayList<GalleryItem>>(){}.getType());
+//                }
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//
+//            adapter = new GalleryAdapter(getActivity(), GalleryFragment.this, mImages);
+//            recyclerView.setAdapter(adapter);
         }
 
         @Override
@@ -222,15 +223,15 @@ public class GalleryFragment extends Fragment {
                 imageCursor.close();
 
                 Collections.sort(result, Collections.reverseOrder());
-                String json = gson.toJson(result);
-
-                try {
-                    FileOutputStream fos = getActivity().openFileOutput("gallery.json", Context.MODE_PRIVATE);
-                    fos.write(json.getBytes());
-                    fos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+//                String json = gson.toJson(result);
+//
+//                try {
+//                    FileOutputStream fos = getActivity().openFileOutput("gallery.json", Context.MODE_PRIVATE);
+//                    fos.write(json.getBytes());
+//                    fos.close();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
 
                 return result;
             }
@@ -241,6 +242,7 @@ public class GalleryFragment extends Fragment {
     public class GetSharedTask extends AsyncTask<String, String, ArrayList<SharedItem>> {
 
         public ArrayList<SharedItem> sharedItemList = new ArrayList<>();
+        private AlertDialog alertDialog;
 
         public GetSharedTask() { }
 
@@ -273,6 +275,12 @@ public class GalleryFragment extends Fragment {
 
             sharedAdapter = new SharedAdapter(getActivity(), GalleryFragment.this, mSharedImages);
             sharedView.setAdapter(sharedAdapter);
+
+            alertDialog = new AlertDialog.Builder(getActivity())
+                    .setMessage("Fetching Images...")
+                    .setCancelable(false)
+                    .create();
+            alertDialog.show();
         }
 
         @Override
@@ -314,6 +322,10 @@ public class GalleryFragment extends Fragment {
             }
             sharedAdapter = new SharedAdapter(getActivity(), GalleryFragment.this, mSharedImages);
             sharedView.setAdapter(sharedAdapter);
+
+            if (alertDialog.isShowing()) {
+                alertDialog.dismiss();
+            }
         }
     }
 
@@ -355,10 +367,7 @@ public class GalleryFragment extends Fragment {
 
         GalleryClient client = ServiceGenerator.createService(GalleryClient.class);
         Call<List<BaseItem>> call = client.getUpdateList(state);
-
-
         try {
-
             List<BaseItem> updateList = call.execute().body();
             if (!updateList.isEmpty()) {
                 for (BaseItem item : updateList) {

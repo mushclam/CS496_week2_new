@@ -1,7 +1,10 @@
 package com.example.q.cs496_week2_new.tabs.Contact;
 
+import android.app.AlertDialog;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -14,7 +17,9 @@ import android.widget.Toast;
 import com.example.q.cs496_week2_new.R;
 import com.example.q.cs496_week2_new.ServiceGenerator;
 import com.example.q.cs496_week2_new.UserProfile;
+import com.example.q.cs496_week2_new.tabs.Gallery.SharedItem;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -32,6 +37,8 @@ public class ContactFragment extends Fragment {
     RecyclerView recyclerView;
     RecyclerView.Adapter adapter;
     RecyclerView.LayoutManager layoutManager;
+
+    SwipeRefreshLayout swipeRefreshLayout;
 
     public ContactFragment() {
         // Required empty public constructor
@@ -60,23 +67,6 @@ public class ContactFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_contact, container, false);
 
-        ContactClient client = ServiceGenerator.createService(ContactClient.class);
-        Call<List<ContactItem>> call = client.getContactLIst(UserProfile.id);
-        Log.e("UserProfile.id test", "value on ContactFragment.onCreateView : " + UserProfile.id);
-        call.enqueue(new Callback<List<ContactItem>>() {
-            @Override
-            public void onResponse(Call<List<ContactItem>> call, Response<List<ContactItem>> response) {
-                Log.e("/contact/ access test", "onResponse : " + response);
-                List<ContactItem> contactItemList = response.body();
-                recyclerView.setAdapter(new ContactAdapter(getActivity(), contactItemList, ContactFragment.this));
-            }
-
-            @Override
-            public void onFailure(Call<List<ContactItem>> call, Throwable t) {
-                Toast.makeText(getActivity(), "ERROR", Toast.LENGTH_SHORT).show();
-            }
-        });
-
         recyclerView = view.findViewById(R.id.recyclerView_contact);
         recyclerView.setHasFixedSize(true);
 
@@ -88,12 +78,53 @@ public class ContactFragment extends Fragment {
         //adapter = new ContactAdapter(getActivity(), null, ContactFragment.this);
         //recyclerView.setAdapter(adapter);
 
+        swipeRefreshLayout = view.findViewById(R.id.refresh_contact);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                new GetContactTask().execute();
+                swipeRefreshLayout.setRefreshing(false);
+            }
+        });
+
         return view;
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        new GetContactTask().execute();
+    }
 
+    public class GetContactTask extends AsyncTask<String, String, ArrayList<ContactItem>> {
+
+        public ArrayList<ContactItem> contactItemsList = new ArrayList<>();
+        private AlertDialog alertDialog;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected ArrayList<ContactItem> doInBackground(String... strings) {
+            ContactClient client = ServiceGenerator.createService(ContactClient.class);
+            Call<List<ContactItem>> call = client.getContactLIst(UserProfile.id);
+            Log.e("UserProfile.id test", "value on ContactFragment.onCreateView : " + UserProfile.id);
+            call.enqueue(new Callback<List<ContactItem>>() {
+                @Override
+                public void onResponse(Call<List<ContactItem>> call, Response<List<ContactItem>> response) {
+                    Log.e("/contact/ access test", "onResponse : " + response);
+                    List<ContactItem> contactItemList = response.body();
+                    recyclerView.setAdapter(new ContactAdapter(getActivity(), contactItemList, ContactFragment.this));
+                }
+
+                @Override
+                public void onFailure(Call<List<ContactItem>> call, Throwable t) {
+                    Toast.makeText(getActivity(), "ERROR", Toast.LENGTH_SHORT).show();
+                }
+            });
+            return null;
+        }
     }
 }
