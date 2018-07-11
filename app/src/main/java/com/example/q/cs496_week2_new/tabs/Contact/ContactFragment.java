@@ -62,11 +62,11 @@ public class ContactFragment extends Fragment {
 
         ContactClient client = ServiceGenerator.createService(ContactClient.class);
         Call<List<ContactItem>> call = client.getContactLIst(UserProfile.id);
-        //Log.d("UserProfile.id test", "value on ContactFragment.onCreateView : " + UserProfile.id);
+        Log.e("UserProfile.id test", "value on ContactFragment.onCreateView : " + UserProfile.id);
         call.enqueue(new Callback<List<ContactItem>>() {
             @Override
             public void onResponse(Call<List<ContactItem>> call, Response<List<ContactItem>> response) {
-                //Log.d("/contact/ access test", "onResponse : " + response);
+                Log.e("/contact/ access test", "onResponse : " + response);
                 List<ContactItem> contactItemList = response.body();
                 recyclerView.setAdapter(new ContactAdapter(getActivity(), contactItemList, ContactFragment.this));
             }

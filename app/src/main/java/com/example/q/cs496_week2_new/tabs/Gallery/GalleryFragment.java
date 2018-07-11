@@ -22,6 +22,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.example.q.cs496_week2_new.R;
 import com.example.q.cs496_week2_new.ServiceGenerator;
 import com.google.gson.Gson;
@@ -427,5 +428,11 @@ public class GalleryFragment extends Fragment {
         } finally {
             return imagePath;
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Glide.get(getActivity()).clearMemory();
     }
 }
