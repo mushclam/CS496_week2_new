@@ -11,6 +11,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.q.cs496_week2_new.R;
 
 import java.util.ArrayList;
@@ -39,7 +40,12 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         final GalleryItem mImage = mImages.get(position);
-        Glide.with(mContext).load(mImage.getFile()).into(holder.imageView);
+        Glide.with(mContext)
+                .load(mImage.getFile())
+                .thumbnail(0.5f)
+                .skipMemoryCache(true)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(holder.imageView);
     }
 
     @Override
@@ -71,5 +77,11 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             intent.putExtra("images", mImages);
             mContext.startActivity(intent);
         }
+    }
+
+    @Override
+    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView);
+        Glide.get(mContext).clearMemory();
     }
 }

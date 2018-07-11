@@ -9,6 +9,11 @@ public class BaseItem {
     public BaseItem() {
     }
 
+    public BaseItem(String _id, String base64) {
+        this._id = _id;
+        this.base64 = base64;
+    }
+
     public String get_id() {
         return _id;
     }

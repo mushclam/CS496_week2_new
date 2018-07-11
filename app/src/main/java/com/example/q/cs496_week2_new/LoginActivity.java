@@ -143,9 +143,9 @@ public class LoginActivity extends AppCompatActivity  {
 
         }
         else{
-            //setContentView(R.layout.activity_main);
             Profile profile = Profile.getCurrentProfile();
             nextActivity(profile);
+            finish();
         }
 
 //        mLoginFormView = findViewById(R.id.login_form);

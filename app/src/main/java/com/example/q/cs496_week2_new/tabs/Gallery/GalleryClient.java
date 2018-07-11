@@ -19,7 +19,8 @@ public interface GalleryClient {
     @GET("/gallery")
     Call<List<BaseItem>> getSharedList();
 
-    @POST("/gallery")
-    Call<GalleryItem> postGalleryList(
+    @POST("/gallery/postImage")
+    Call<String> postGalleryList(
+            @Body BaseItem baseItem
     );
 }

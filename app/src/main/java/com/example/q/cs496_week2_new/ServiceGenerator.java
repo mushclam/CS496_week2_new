@@ -7,8 +7,8 @@ import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 public class ServiceGenerator {
 
-    //private static final String BASE_URL = "http://52.231.69.137:8080";
-    private static final String BASE_URL = "http://52.231.66.99:8000";
+    private static final String BASE_URL = "http://52.231.69.137:8080";
+//    private static final String BASE_URL = "http://52.231.66.99:8000";
     private static OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
 
     private static Retrofit retrofit =

@@ -1,8 +1,24 @@
 package com.example.q.cs496_week2_new;
 
+import android.Manifest;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
@@ -11,6 +27,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,22 +35,38 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.q.cs496_week2_new.tabs.Canvas.CanvasFragment;
 import com.example.q.cs496_week2_new.tabs.Contact.ContactFragment;
+import com.example.q.cs496_week2_new.tabs.Gallery.BaseItem;
+import com.example.q.cs496_week2_new.tabs.Gallery.GalleryClient;
 import com.example.q.cs496_week2_new.tabs.Gallery.GalleryFragment;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import retrofit2.Call;
+
 public class MainActivity extends AppCompatActivity {
+
+    private final static int MY_PERMISSION_CAMERA = 100;
+
+    private final static int GALLERY_CODE = 200;
+    private final static int CAMERA_CODE = 300;
+
+    private String imagePath;
 
     private SectionsPagerAdapter mSectionsPagerAdapter;
 
     private ViewPager mViewPager;
+    private FloatingActionButton fab;
+
+    private CameraProcessing cameraProcessing;
 
     private List<Fragment> mFragment;
 
@@ -41,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        cameraProcessing = new CameraProcessing(this);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -57,15 +91,61 @@ public class MainActivity extends AppCompatActivity {
         mViewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
         tabLayout.addOnTabSelectedListener(new TabLayout.ViewPagerOnTabSelectedListener(mViewPager));
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                new AlertDialog.Builder(MainActivity.this)
+                        .setMessage("Load Image from")
+                        .setNegativeButton("Gallery", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                selectGallery();
+                            }
+                        })
+                        .setPositiveButton("Camera", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                int permissionCheck = ContextCompat.checkSelfPermission(MainActivity.this,
+                                        Manifest.permission.CAMERA);
+
+                                if (permissionCheck == PackageManager.PERMISSION_DENIED) {
+                                    checkCameraPermission();
+                                } else {
+                                    cameraProcessing.sendTakePhotoIntent();
+                                }
+                            }
+                        })
+                        .create().show();
             }
         });
 
+        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                switch (position) {
+                    case 0:
+                        fab.hide();
+                        break;
+                    case 1:
+                        fab.show();
+                        break;
+                    case 2:
+                        fab.hide();
+                        break;
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
     }
 
 
@@ -152,5 +232,151 @@ public class MainActivity extends AppCompatActivity {
             // Show 3 total pages.
             return mFragment.size();
         }
+    }
+
+    private void checkCameraPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
+                new AlertDialog.Builder(this)
+                        .setMessage("Camera Permission")
+                        .setNeutralButton("Settings", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                intent.setData(Uri.parse("package:" + getPackageName()));
+                                startActivity(intent);
+                            }
+                        })
+                        .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+//                                finish();
+                            }
+                        })
+                        .setCancelable(false).create().show();
+            } else {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA},
+                        MY_PERMISSION_CAMERA);
+            }
+        }
+    }
+
+    private void selectGallery() {
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setData(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+        startActivityForResult(intent, GALLERY_CODE);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(resultCode == RESULT_OK) {
+            switch(requestCode) {
+                case GALLERY_CODE: {
+                    new getImage(data.getData()).execute();
+                } break;
+                case CAMERA_CODE: {
+                    Bitmap result = cameraProcessing.resultProcessing();
+                    imagePath = cameraProcessing.imagePath;
+                }
+            }
+        }
+    }
+
+    private Bitmap sendPicture(Uri imgUri) {
+        imagePath = getRealPathFromURI(imgUri);
+        Log.e("PATH", imagePath);
+        ExifInterface exif = null;
+        try {
+            exif = new ExifInterface(imagePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+        int exifDegree = exifOrientationToDegrees(exifOrientation);
+
+        Bitmap bitmap = rotate(BitmapFactory.decodeFile(imagePath), exifDegree);
+//        preview.setImageBitmap(rotate(bitmap, exifDegree));
+        return bitmap;
+    }
+
+    private class getImage extends AsyncTask<String, String, Boolean> {
+
+        private AlertDialog alertDialog;
+        private Uri imgUri;
+
+        public getImage(Uri imgUri) {
+            this.imgUri = imgUri;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            alertDialog = new AlertDialog.Builder(MainActivity.this)
+                    .setMessage("Uploading Image...")
+                    .setCancelable(false)
+                    .create();
+            alertDialog.create();
+        }
+
+        @Override
+        protected Boolean doInBackground(String... strings) {
+            Bitmap bitmap = sendPicture(imgUri);
+            String result = BitmapString.bitmapToBase64(bitmap);
+            BaseItem base = new BaseItem(null, result);
+
+            GalleryClient client = ServiceGenerator.createService(GalleryClient.class);
+            Call<String> call = client.postGalleryList(base);
+            try {
+                if (call.execute().isSuccessful()) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return false;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean bitmap) {
+            super.onPostExecute(bitmap);
+            if(alertDialog.isShowing()) {
+                alertDialog.dismiss();
+            }
+            Toast.makeText(MainActivity.this, "Upload Success", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private int exifOrientationToDegrees(int exifOrientation) {
+        if(exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) {
+            return 90;
+        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_180) {
+            return 180;
+        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_270) {
+            return 270;
+        }
+        return 0;
+    }
+
+    private Bitmap rotate(Bitmap bitmap, float degree) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(degree);
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+    }
+
+    private String getRealPathFromURI(Uri contentUri) {
+        int columnIdx = 0;
+        String[] proj = {MediaStore.Images.Media.DATA};
+        Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
+        if (cursor.moveToFirst()) {
+            columnIdx = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+        }
+
+        return cursor.getString(columnIdx);
     }
 }
