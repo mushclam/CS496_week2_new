@@ -54,7 +54,6 @@ public class CanvasFragment extends Fragment {
     @Override
     public void onResume(){
         super.onResume();
-        ((MainActivity)getActivity()).getSupportActionBar().hide();
     }
 
     @Override

@@ -76,8 +76,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         cameraProcessing = new CameraProcessing(this);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+//        setSupportActionBar(toolbar);
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
@@ -95,28 +95,7 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                new AlertDialog.Builder(MainActivity.this)
-                        .setMessage("Load Image from")
-                        .setNegativeButton("Gallery", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                selectGallery();
-                            }
-                        })
-                        .setPositiveButton("Camera", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                int permissionCheck = ContextCompat.checkSelfPermission(MainActivity.this,
-                                        Manifest.permission.CAMERA);
-
-                                if (permissionCheck == PackageManager.PERMISSION_DENIED) {
-                                    checkCameraPermission();
-                                } else {
-                                    cameraProcessing.sendTakePhotoIntent();
-                                }
-                            }
-                        })
-                        .create().show();
+                selectGallery();
             }
         });
 

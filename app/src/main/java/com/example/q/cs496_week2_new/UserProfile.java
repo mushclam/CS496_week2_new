@@ -3,11 +3,14 @@ package com.example.q.cs496_week2_new;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.OvalShape;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.telephony.PhoneNumberFormattingTextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -49,8 +52,8 @@ public class UserProfile extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(this);
         setContentView(R.layout.activity_userprofile);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+//        setSupportActionBar(toolbar);
 
         shareDialog = new ShareDialog(this);
 
@@ -63,6 +66,8 @@ public class UserProfile extends AppCompatActivity {
 
         nickView = (EditText) findViewById(R.id.nickname_info);
         numberView = (EditText) findViewById(R.id.phoneNumber);
+
+        numberView.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
 
         TextView nameView = (TextView) findViewById(R.id.nameAndSurname);
         nameView.setText(name);
@@ -200,6 +205,7 @@ public class UserProfile extends AppCompatActivity {
         protected void onPostExecute(Bitmap result){
             profile = BitmapString.bitmapToBase64(result);
             bmImage.setImageBitmap(result);
+            bmImage.setBackground(new ShapeDrawable(new OvalShape()));
         }
 
     }
