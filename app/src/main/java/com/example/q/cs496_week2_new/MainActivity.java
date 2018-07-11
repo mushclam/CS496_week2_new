@@ -1,5 +1,6 @@
 package com.example.q.cs496_week2_new;
 
+import android.content.Intent;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -18,6 +19,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import android.widget.TextView;
+
+import com.facebook.login.LoginManager;
 
 import com.example.q.cs496_week2_new.tabs.Canvas.CanvasFragment;
 import com.example.q.cs496_week2_new.tabs.Contact.ContactFragment;
@@ -61,8 +64,11 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+
+                LoginManager.getInstance().logOut();
+                Intent login = new Intent(MainActivity.this, UserProfile.class);
+                startActivity(login);
+                finish();
             }
         });
 

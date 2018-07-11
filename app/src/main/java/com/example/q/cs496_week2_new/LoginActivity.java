@@ -137,13 +137,7 @@ public class LoginActivity extends AppCompatActivity  {
                             // App code
                         }
                     });
-            loginButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if (AccessToken.getCurrentAccessToken() == null)
-                        Toast.makeText(getApplicationContext(), "Logged out", Toast.LENGTH_SHORT).show();
-                }
-            });
+
         }
         else{
             setContentView(R.layout.activity_main);

@@ -19,6 +19,8 @@ import com.facebook.login.LoginManager;
 import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.widget.ShareDialog;
 
+import org.json.JSONObject;
+
 import java.io.InputStream;
 
 public class UserProfile extends AppCompatActivity {
@@ -40,6 +42,11 @@ public class UserProfile extends AppCompatActivity {
         String surname = inBundle.get("surname").toString();
         String imageUrl = inBundle.get("imageUrl").toString();
         String id = inBundle.get("id").toString();
+
+        JSONObject object = new JSONObject();
+
+
+
 
         TextView idView = (TextView) findViewById(R.id.idinfo) ;
         idView.setText(id);
