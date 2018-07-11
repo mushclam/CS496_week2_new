@@ -10,7 +10,9 @@ import android.content.pm.PackageManager;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.LoaderManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
@@ -58,12 +60,18 @@ import java.util.Arrays;
 import java.util.List;
 
 import static android.Manifest.permission.READ_CONTACTS;
+import static android.Manifest.permission.WRITE_CONTACTS;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
 /**
  * A login screen that offers login via email/password.
  */
 public class LoginActivity extends AppCompatActivity  {
+
+    int permsRequestCode = 200;
+    String[] perms = {
+            "android.permission.WRITE_EXTERNAL_STORAGE",
+    };
 
     private CallbackManager callbackManager;
     private AccessTokenTracker accessTokenTracker;
@@ -79,6 +87,9 @@ public class LoginActivity extends AppCompatActivity  {
         setContentView(R.layout.activity_login);
         textView = findViewById(R.id.textView);
 
+        if (!checkPermission()) {
+            requestPermission();
+        }
 
         loginButton = (LoginButton) findViewById(R.id.login_button);
         loginButton.setReadPermissions(Arrays.asList("email"));
@@ -150,6 +161,35 @@ public class LoginActivity extends AppCompatActivity  {
 
 //        mLoginFormView = findViewById(R.id.login_form);
 //        mProgressView = findViewById(R.id.login_progress);
+    }
+
+    private boolean checkPermission() {
+        int resultW = ContextCompat.checkSelfPermission(this, WRITE_EXTERNAL_STORAGE);
+        int result_contact = ContextCompat.checkSelfPermission(this, WRITE_CONTACTS);
+        return resultW == PackageManager.PERMISSION_GRANTED && result_contact == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestPermission() {
+        ActivityCompat.requestPermissions(this, perms, permsRequestCode);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        Log.e("퍼미션", "결과 받음");
+        switch (requestCode) {
+            case 200: {
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.e("퍼미션", "허용");
+
+                } else {
+                    Log.e("퍼미션", "거절");
+                    Toast.makeText(this, "권한이 허용되어야 합니다", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+            }
+        }
     }
 
 //    private void populateAutoComplete() {
