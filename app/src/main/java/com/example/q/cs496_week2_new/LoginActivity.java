@@ -99,47 +99,54 @@ public class LoginActivity extends AppCompatActivity  {
         profileTracker.startTracking();
 
 
-        LoginManager.getInstance().registerCallback(callbackManager,
-                new FacebookCallback<LoginResult>() {
-                    @Override
-                    public void onSuccess(LoginResult loginResult) {
-                        GraphRequest.newMeRequest(
-                                loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
-                                    @Override
-                                    public void onCompleted(JSONObject me, GraphResponse response) {
-                                        if (response.getError() != null) {
+        if (AccessToken.getCurrentAccessToken() == null) {
+            setContentView(R.layout.activity_login);
+
+            textView = findViewById(R.id.textView);
+
+            loginButton = (LoginButton) findViewById(R.id.login_button);
+            loginButton.setReadPermissions(Arrays.asList("email"));
+
+            LoginManager.getInstance().registerCallback(callbackManager,
+                    new FacebookCallback<LoginResult>() {
+                        @Override
+                        public void onSuccess(LoginResult loginResult) {
+                            GraphRequest.newMeRequest(
+                                    loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
+                                        @Override
+                                        public void onCompleted(JSONObject me, GraphResponse response) {
+                                            if (response.getError() != null) {
+                                            } else {
+                                                String email = me.optString("email");
+                                                String id = me.optString("id");
+                                            }
                                         }
-                                        else {
-                                            String email =me.optString("email");
-                                            String id = me.optString("id");
-                                        }
-                                    }
-                                }).executeAsync();
+                                    }).executeAsync();
 
 
-                        Profile profile = Profile.getCurrentProfile();
-                        nextActivity(profile);
-                        Toast.makeText(getApplicationContext(), "Logging in...", Toast.LENGTH_SHORT).show();
+                            Profile profile = Profile.getCurrentProfile();
+                            nextActivity(profile);
+                            Toast.makeText(getApplicationContext(), "Logging in...", Toast.LENGTH_SHORT).show();
 
-                    }
+                        }
 
-                    @Override
-                    public void onCancel() {
-                        Toast.makeText(getApplicationContext(), "Login Canceled", Toast.LENGTH_SHORT).show();
-                    }
+                        @Override
+                        public void onCancel() {
+                            Toast.makeText(getApplicationContext(), "Login Canceled", Toast.LENGTH_SHORT).show();
+                        }
 
-                    @Override
-                    public void onError(FacebookException exception) {
-                        // App code
-                    }
-                });
-        loginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (AccessToken.getCurrentAccessToken() == null)
-                    Toast.makeText(getApplicationContext(), "Logged out", Toast.LENGTH_SHORT).show();
-            }
-        });
+                        @Override
+                        public void onError(FacebookException exception) {
+                            // App code
+                        }
+                    });
+
+        }
+        else{
+            //setContentView(R.layout.activity_main);
+            Profile profile = Profile.getCurrentProfile();
+            nextActivity(profile);
+        }
 
 //        mLoginFormView = findViewById(R.id.login_form);
 //        mProgressView = findViewById(R.id.login_progress);

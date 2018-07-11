@@ -5,9 +5,13 @@ public class ContactItem {
     private String profile;
     private String nickname;
     private String phoneNumber;
-    private String emailAddress;
+    //private String emailAddress;
 
-    public ContactItem() {
+    public ContactItem(String _id, String profile, String nickname, String phoneNumber) {
+        this._id = _id;
+        this.profile = profile;
+        this.nickname = nickname;
+        this.phoneNumber = phoneNumber;
     }
 
     public String get_id() {
@@ -26,7 +30,9 @@ public class ContactItem {
         return phoneNumber;
     }
 
+    /*
     public String getEmailAddress() {
         return emailAddress;
     }
+    */
 }
