@@ -66,6 +66,7 @@
         android:layout_margin="@dimen/fab_margin"
         android:tint="@android:color/white"
         android:visibility="visible"
-        android:backgroundTint="#3b5998" />
+        android:backgroundTint="#3b5998"
+        android:src="@drawable/facebook"/>
 
 </android.support.design.widget.CoordinatorLayout>
