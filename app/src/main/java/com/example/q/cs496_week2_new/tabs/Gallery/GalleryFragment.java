@@ -424,10 +424,8 @@ public class GalleryFragment extends Fragment {
         String imagePath = null;
         try {
             String filename = _id + ".png";
-            Log.e("CACHE_NAME", filename);
             FileOutputStream fos = getActivity().openFileOutput(filename, Context.MODE_PRIVATE);
             imagePath = getActivity().getFileStreamPath(filename).getPath();
-            Log.e("CACHE_PATH", imagePath);
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
             fos.flush();
             fos.close();

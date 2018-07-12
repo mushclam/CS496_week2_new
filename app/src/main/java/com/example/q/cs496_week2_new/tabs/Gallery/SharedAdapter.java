@@ -72,10 +72,10 @@ public class SharedAdapter extends RecyclerView.Adapter<SharedAdapter.ViewHolder
 
         @Override
         public void onClick(View view) {
-//            Intent intent = new Intent(mContext, ViewActivity.class);
-//            intent.putExtra("index", getLayoutPosition());
-//            intent.putExtra("images", mImages);
-//            mContext.startActivity(intent);
+            Intent intent = new Intent(mContext, ViewActivity.class);
+            intent.putExtra("index", getLayoutPosition());
+            intent.putExtra("images", mImages);
+            mContext.startActivity(intent);
         }
     }
 

@@ -72,10 +72,10 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
         @Override
         public void onClick(View view) {
-            Intent intent = new Intent(mContext, ViewActivity.class);
-            intent.putExtra("index", getLayoutPosition());
-            intent.putExtra("images", mImages);
-            mContext.startActivity(intent);
+//            Intent intent = new Intent(mContext, ViewActivity.class);
+//            intent.putExtra("index", getLayoutPosition());
+//            intent.putExtra("images", mImages);
+//            mContext.startActivity(intent);
         }
     }
 
