@@ -1,6 +1,7 @@
 package com.example.q.cs496_week2_new;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -19,6 +20,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -74,18 +76,24 @@ public class CameraProcessing {
                 ex.printStackTrace();
             }
 
-            if (photoFile != null) {
-                photoUri = FileProvider.getUriForFile(mContext, mContext.getPackageName(), photoFile);
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
-                ((Activity)mContext).startActivityForResult(takePictureIntent, CAMERA_CODE);
-            }
+//            if (photoFile != null) {
+//                if (ContentResolver.SCHEME_CONTENT.equals(fileUri.getScheme())) {
+//                    Uri uri = new Uri.Builder()
+//                            .path(fileUri.getPath())
+//                            .authority(fileUri.getAuthority())
+//                            .scheme(ContentResolver.SCHEME_CONTENT)
+//                            .build();
+//                }
+            photoUri = FileProvider.getUriForFile(mContext, mContext.getPackageName(), photoFile);
+            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+            ((Activity)mContext).startActivityForResult(takePictureIntent, CAMERA_CODE);
         }
     }
 
     public File createImageFile() throws IOException {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "TEST_" + timeStamp + "_";
-        File storageDir = mContext.getCacheDir();
+        File storageDir = mContext.getFilesDir();
         if (!storageDir.exists()) {
             storageDir.mkdirs();
         }
