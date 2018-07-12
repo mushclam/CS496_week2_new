@@ -100,7 +100,7 @@ public class CanvasFragment extends Fragment {
 
 
         mSocket.on("loadAction", onLoadAction);
-        mSocket.on(Socket.EVENT_CONNECT, onConnect);
+//        mSocket.on(Socket.EVENT_CONNECT, onConnect);
         mSocket.connect();
         isConnected = true;
 
