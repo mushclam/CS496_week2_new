@@ -23,7 +23,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -32,10 +31,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.math.BigDecimal;
-import java.net.Socket;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import io.socket.client.IO;
+import io.socket.client.Socket;
+import io.socket.emitter.Emitter;
 
 
 public class PaintView extends View {
@@ -60,102 +62,8 @@ public class PaintView extends View {
     private Canvas mCanvas;
     private Paint mBitmapPaint = new Paint(Paint.DITHER_FLAG);
 
-    // String : token (dangerous) or phoneNumber (maybe unique)
-    //public HashMap<String, ArrayList<FingerPath>> paths_map = new HashMap<>();
-
-    public Handler mHandler;
-    public Socket socket;
-    public BufferedReader networkReader;
-    public BufferedWriter networkWriter;
-
-    public String ip = "52.231.66.99";
-    public int port = 8888;
-
     public Gson gson = new Gson();
 
-    public void setSocket(String ip, int port) throws IOException {
-
-        try {
-            socket = new Socket(ip, port);
-            networkWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-            networkReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        } catch (IOException e) {
-            System.out.println(e);
-            e.printStackTrace();
-        }
-    }
-
-    public void networkInit() {
-        mHandler = new Handler();
-
-        try {
-            setSocket(ip, port);
-        } catch (IOException e){
-            e.printStackTrace();
-        }
-
-        // Send header info
-        PrintWriter out = new PrintWriter(networkWriter, true);
-        JsonObject header = new JsonObject();
-        header.addProperty("token", UserProfile.id);
-        // TODO: change image_id
-        header.addProperty("image_id", "temp");
-
-        String msg = gson.toJson(header);
-        out.print(msg);
-
-        checkUpdate.start();
-    }
-
-    public void sendDrawing () {
-        PrintWriter out = new PrintWriter(networkWriter, true);
-        String msg = "Asdf";
-        out.print(msg);
-    }
-    private Thread checkUpdate = new Thread() {
-
-        public void run() {
-            try {
-                String json_str;
-                Log.w("checkUpdate", "Open Canvas started");
-                while (true) {
-                    Log.w("checkUpdate-loop", "Receiving other's drawing...");
-                    json_str = networkReader.readLine();
-                    JSONObject obj = new JSONObject(json_str);
-
-                    JSONArray action_downs = obj.getJSONArray("d");
-                    MyMotionEvent action_moves = new MyMotionEvent(obj.getJSONArray("m"));
-                    JSONArray action_ups = obj.getJSONArray("u");
-
-                    int i;
-                    for (i = 0; i < action_downs.length(); ++i){
-                        JSONObject action = (JSONObject) action_downs.get(i);
-                        touchStart(BigDecimal.valueOf(action.optDouble("x")).floatValue(),
-                                BigDecimal.valueOf(action.optDouble("y")).floatValue(),
-                                action.optInt("id"));
-                    }
-
-                    touchMove(action_moves);
-
-                    for (i = 0; i < action_ups.length(); ++i){
-                        JSONObject action = (JSONObject) action_ups.get(i);
-                        touchUp(action.optInt("id"));
-                    }
-                    //mHandler.post(showUpdate);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    };
-
-    private Runnable showUpdate = new Runnable() {
-
-        public void run() {
-            //Toast.makeText(NewClient.this, "Coming word: " + html, Toast.LENGTH_SHORT).show();
-        }
-
-    };
 
     public PaintView(Context context) {
         this(context, null);
@@ -186,8 +94,6 @@ public class PaintView extends View {
 
         currentColor = DEFAULT_COLOR;
         strokeWidth = BRUSH_SIZE;
-
-        networkInit();
     }
 
     public void normal() {
@@ -296,10 +202,6 @@ public class PaintView extends View {
         path.moveTo(x,y);
     }
 
-    public void remote_touchStart(float x, float y) {
-
-    }
-
     /*private void touchMove(float x, float y) {
         float dx = Math.abs(x - mX);
         float dy = Math.abs(y - mY);
@@ -372,7 +274,6 @@ public class PaintView extends View {
         float y = event.getY();
 
         JsonObject action;
-        PrintWriter out;
         String msg;
         switch(event.getAction()) {
             case MotionEvent.ACTION_DOWN :
@@ -382,9 +283,9 @@ public class PaintView extends View {
                 action.addProperty("x", x);
                 action.addProperty("y", y);
 
-                out = new PrintWriter(networkWriter, true);
-                msg = gson.toJson(action);
-                out.print(msg);
+
+                CanvasFragment.mSocket.emit("sendAction", action);
+
                 break;
             case MotionEvent.ACTION_MOVE :
                 //touchMove(x, y);
@@ -393,23 +294,20 @@ public class PaintView extends View {
                 action.addProperty("x", x);
                 action.addProperty("y", y);
 
-                out = new PrintWriter(networkWriter, true);
-                msg = gson.toJson(action);
-                out.print(msg);
+                CanvasFragment.mSocket.emit("sendAction", action);
                 break;
             case MotionEvent.ACTION_UP :
                 //touchUp();
                 action = new JsonObject();
                 action.addProperty("type", 2);
-                
-                out = new PrintWriter(networkWriter, true);
-                msg = gson.toJson(action);
-                out.print(msg);
+
+                CanvasFragment.mSocket.emit("sendAction", action);
                 break;
         }
-        invalidate();
+        //invalidate();
         return true;
     }
+
 
     /*@Override
     public boolean onTouchEvent(MotionEvent event) {
