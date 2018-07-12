@@ -42,6 +42,7 @@ import com.example.q.cs496_week2_new.tabs.Contact.ContactFragment;
 import com.example.q.cs496_week2_new.tabs.Gallery.BaseItem;
 import com.example.q.cs496_week2_new.tabs.Gallery.GalleryClient;
 import com.example.q.cs496_week2_new.tabs.Gallery.GalleryFragment;
+import com.facebook.login.LoginManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -125,30 +126,36 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+        //FACEBOOK LOGOUT and go back to LoginActivity
+        FloatingActionButton fablogout = (FloatingActionButton) findViewById(R.id.fablogout);
+        fablogout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+                alertDialog.setTitle("LOGOUT");
+                alertDialog.setMessage("Do you really want to log out?");
+                alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "YES", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        LoginManager.getInstance().logOut();
+                        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                        startActivity(intent);
+                        finish();
+                    }
+                });
+                alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "NO", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                    }
+                });
+
+                alertDialog.show();
+
+            }
+        });
     }
 
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
 
     /**
      * A placeholder fragment containing a simple view.

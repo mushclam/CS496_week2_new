@@ -126,7 +126,7 @@ public class UserProfile extends AppCompatActivity {
                         }
                     });
                 } else {
-                    Toast.makeText(getApplicationContext(), response, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Login Failed", Toast.LENGTH_SHORT).show();
                 }
             } else {
                 Toast.makeText(getApplicationContext(), "Login fail...", Toast.LENGTH_SHORT).show();
