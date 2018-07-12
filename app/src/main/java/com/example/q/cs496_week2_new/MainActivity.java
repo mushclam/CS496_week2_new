@@ -42,6 +42,7 @@ import com.example.q.cs496_week2_new.tabs.Contact.ContactFragment;
 import com.example.q.cs496_week2_new.tabs.Gallery.BaseItem;
 import com.example.q.cs496_week2_new.tabs.Gallery.GalleryClient;
 import com.example.q.cs496_week2_new.tabs.Gallery.GalleryFragment;
+import com.facebook.login.LoginManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -146,30 +147,43 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+        FloatingActionButton fablogout = (FloatingActionButton) findViewById(R.id.fablogout);
+        fablogout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                LoginManager.getInstance().logOut();
+                Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        });
     }
 
-
+    /*
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
+        super.onCreateOptionsMenu(menu);
+
+        MenuItem item = menu.add(0,1,0,"LOGOUT");
         return true;
     }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+        switch (item.getItemId()) {
+            case 1:
+                LoginManager.getInstance().logOut();
+                Toast.makeText(this,"LOGOUT",Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                startActivity(intent);
+                finish();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+                return true;
         }
 
-        return super.onOptionsItemSelected(item);
+        return false;
     }
+    */
 
     /**
      * A placeholder fragment containing a simple view.

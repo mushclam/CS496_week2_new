@@ -69,4 +69,14 @@
         android:visibility="invisible"
         app:srcCompat="@android:drawable/ic_input_add" />
 
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fablogout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|bottom"
+        android:layout_margin="@dimen/fab_margin"
+        android:tint="@android:color/white"
+        android:visibility="visible"
+        android:backgroundTint="#3b5998" />
+
 </android.support.design.widget.CoordinatorLayout>
