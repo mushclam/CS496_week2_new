@@ -18,12 +18,21 @@ import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.example.q.cs496_week2_new.UserProfile;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.math.BigDecimal;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -60,7 +69,9 @@ public class PaintView extends View {
     public BufferedWriter networkWriter;
 
     public String ip = "52.231.66.99";
-    public int port = 8080;
+    public int port = 8888;
+
+    public Gson gson = new Gson();
 
     public void setSocket(String ip, int port) throws IOException {
 
@@ -83,8 +94,17 @@ public class PaintView extends View {
             e.printStackTrace();
         }
 
-        checkUpdate.start();
+        // Send header info
+        PrintWriter out = new PrintWriter(networkWriter, true);
+        JsonObject header = new JsonObject();
+        header.addProperty("token", UserProfile.id);
+        // TODO: change image_id
+        header.addProperty("image_id", "temp");
 
+        String msg = gson.toJson(header);
+        out.print(msg);
+
+        checkUpdate.start();
     }
 
     public void sendDrawing () {
@@ -96,16 +116,35 @@ public class PaintView extends View {
 
         public void run() {
             try {
-                String line;
+                String json_str;
                 Log.w("checkUpdate", "Open Canvas started");
                 while (true) {
                     Log.w("checkUpdate-loop", "Receiving other's drawing...");
-                    line = networkReader.readLine();
-                    //html = line;
-                    mHandler.post(showUpdate);
+                    json_str = networkReader.readLine();
+                    JSONObject obj = new JSONObject(json_str);
+
+                    JSONArray action_downs = obj.getJSONArray("d");
+                    MyMotionEvent action_moves = new MyMotionEvent(obj.getJSONArray("m"));
+                    JSONArray action_ups = obj.getJSONArray("u");
+
+                    int i;
+                    for (i = 0; i < action_downs.length(); ++i){
+                        JSONObject action = (JSONObject) action_downs.get(i);
+                        touchStart(BigDecimal.valueOf(action.optDouble("x")).floatValue(),
+                                BigDecimal.valueOf(action.optDouble("y")).floatValue(),
+                                action.optInt("id"));
+                    }
+
+                    touchMove(action_moves);
+
+                    for (i = 0; i < action_ups.length(); ++i){
+                        JSONObject action = (JSONObject) action_ups.get(i);
+                        touchUp(action.optInt("id"));
+                    }
+                    //mHandler.post(showUpdate);
                 }
             } catch (Exception e) {
-
+                e.printStackTrace();
             }
         }
     };
@@ -147,6 +186,8 @@ public class PaintView extends View {
 
         currentColor = DEFAULT_COLOR;
         strokeWidth = BRUSH_SIZE;
+
+        networkInit();
     }
 
     public void normal() {
@@ -193,7 +234,6 @@ public class PaintView extends View {
             mCanvas.drawPath(fp.path, mPaint);
 
         }*/
-
         canvas.drawBitmap(mBitmap, 0, 0, mBitmapPaint);
         /*
         if (paths.size() > 0)
@@ -227,26 +267,40 @@ public class PaintView extends View {
             canvas.drawPath(fp.path, mPaint);
         }
 
-
 //        canvas.restore(); // canvas를 가장 최근의 canvas.save 시점으로 복구 (그 사이의 변화를 삭제)
     }
 
-    private void touchStart(float x, float y) {
+    /*private void touchStart(float x, float y) {
         mPath = new Path();
         FingerPath fp = new FingerPath(currentColor, emboss, blur, strokeWidth, mPath);
         paths.add(fp);
+
+        Gson gson = new Gson();
+        String temp = gson.toJson(mPath);
+        Log.d("Path json test", "temp : "+temp);
 
         mPath.reset();
         mPath.moveTo(x, y);
         mX = x;
         mY = y;
+    }*/
+    // id : user 식별자
+    public void touchStart(float x, float y, int id) {
+        Path path = new Path();
+        FingerPath fp = new FingerPath(currentColor, emboss, blur, strokeWidth, path);
+        ArrayList<Pair<Float, Float>> xys = new ArrayList<>();
+        xys.add(new Pair(x,y));
+
+        multi_paths.put(id, new Pair(fp, xys));
+        path.reset();
+        path.moveTo(x,y);
     }
 
     public void remote_touchStart(float x, float y) {
 
     }
 
-    private void touchMove(float x, float y) {
+    /*private void touchMove(float x, float y) {
         float dx = Math.abs(x - mX);
         float dy = Math.abs(y - mY);
 
@@ -254,38 +308,110 @@ public class PaintView extends View {
             mPath.quadTo(mX, mY, (x + mX) / 2, (y + mY) / 2);
             mX = x;
             mY = y;
+        }
+    }*/
+    public void touchMove(MyMotionEvent event) {
+        Path path;
+        FingerPath fp;
+        ArrayList<Pair<Float, Float>> xys;
+        float x, y, mX, mY, dx, dy;
+        for (int i=0; i<event.getPointerCount(); i++) {
+            int id = event.getPointerId(i);
+            if (multi_paths.get(id) != null) {
+                x = event.getX(i);
+                y = event.getY(i);
 
+                fp = multi_paths.get(id).first;
+                path = fp.path;
+                xys = multi_paths.get(id).second;
+                assert xys.size() > 0;
+                mX = xys.get(xys.size() - 1).first;
+                mY = xys.get(xys.size() - 1).second;
+                dx = Math.abs(x - mX);
+                dy = Math.abs(y - mY);
 
+                if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE) {
+                    path.quadTo(mX, mY, (x + mX) / 2, (y + mY) / 2);
+                    xys.add(new Pair(x, y));
+                }
+            }
         }
     }
 
-    private void touchUp() {
+    /*private void touchUp() {
         mPath.lineTo(mX, mY);
+    }*/
+
+    public void touchUp(int id){
+        FingerPath fp;
+        ArrayList<Pair<Float, Float>> xys;
+        float mX, mY;
+        if (multi_paths.get(id) != null) {
+            fp = multi_paths.get(id).first;
+            xys = multi_paths.get(id).second;
+            mX = xys.get(xys.size() - 1).first;
+            mY = xys.get(xys.size() - 1).second;
+            fp.path.lineTo(mX, mY);
+
+            mPaint.setColor(fp.color);
+            mPaint.setStrokeWidth(fp.strokeWidth);
+            mPaint.setMaskFilter(null);
+
+            if (fp.emboss)
+                mPaint.setMaskFilter(mEmboss);
+            else if (fp.blur)
+                mPaint.setMaskFilter(mBlur);
+            mCanvas.drawPath(fp.path, mPaint);
+            multi_paths.remove(id);
+        }
     }
 
-    /*@Override
+    @Override
     public boolean onTouchEvent(MotionEvent event) {
         float x = event.getX();
         float y = event.getY();
 
+        JsonObject action;
+        PrintWriter out;
+        String msg;
         switch(event.getAction()) {
             case MotionEvent.ACTION_DOWN :
-                touchStart(x, y);
-                invalidate();
+                //touchStart(x, y);
+                action = new JsonObject();
+                action.addProperty("type", 0);
+                action.addProperty("x", x);
+                action.addProperty("y", y);
+
+                out = new PrintWriter(networkWriter, true);
+                msg = gson.toJson(action);
+                out.print(msg);
                 break;
             case MotionEvent.ACTION_MOVE :
-                touchMove(x, y);
-                invalidate();
+                //touchMove(x, y);
+                action = new JsonObject();
+                action.addProperty("type", 1);
+                action.addProperty("x", x);
+                action.addProperty("y", y);
+
+                out = new PrintWriter(networkWriter, true);
+                msg = gson.toJson(action);
+                out.print(msg);
                 break;
             case MotionEvent.ACTION_UP :
-                touchUp();
-                invalidate();
+                //touchUp();
+                action = new JsonObject();
+                action.addProperty("type", 2);
+                
+                out = new PrintWriter(networkWriter, true);
+                msg = gson.toJson(action);
+                out.print(msg);
                 break;
         }
-
+        invalidate();
         return true;
-    }*/
-    @Override
+    }
+
+    /*@Override
     public boolean onTouchEvent(MotionEvent event) {
         int index = event.getActionIndex();
         int id = event.getPointerId(index);
@@ -293,80 +419,30 @@ public class PaintView extends View {
         Path path;
         FingerPath fp;
         ArrayList<Pair<Float, Float>> xys;
-        float x,y, mX, mY, dx, dy;
+        float x, y, mX, mY, dx, dy;
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
             case MotionEvent.ACTION_POINTER_DOWN:
                 Log.d("draw test", "action down");
-                x = event.getX(index);
-                y = event.getY(index);
-
-                path = new Path();
-                fp = new FingerPath(currentColor, emboss, blur, strokeWidth, path);
-                xys = new ArrayList<>();
-                xys.add(new Pair(x,y));
-
-                multi_paths.put(id, new Pair(fp, xys));
-                path.reset();
-                path.moveTo(x, y);
-
+                //touchStart(event.getX(index), event.getY(index), id);
                 break;
 
             case MotionEvent.ACTION_MOVE:
                 Log.d("draw test", "action move");
-                for (int i=0; i<event.getPointerCount(); i++) {
-                    id = event.getPointerId(i);
-                    if (multi_paths.get(id) != null) {
-                        x = event.getX(i);
-                        y = event.getY(i);
-
-
-                        fp = multi_paths.get(id).first;
-                        path = fp.path;
-                        xys = multi_paths.get(id).second;
-                        assert xys.size() > 0;
-                        mX = xys.get(xys.size() - 1).first;
-                        mY = xys.get(xys.size() - 1).second;
-                        dx = Math.abs(x - mX);
-                        dy = Math.abs(y - mY);
-
-                        if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE) {
-                            path.quadTo(mX, mY, (x + mX) / 2, (y + mY) / 2);
-                            xys.add(new Pair(x, y));
-                        }
-                    }
-                    //if (path != null) path.lineTo(event.getX(i), event.getY(i));
-                }
+                //touchMove(event);
                 break;
 
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_POINTER_UP:
                 Log.d("draw test", "action up");
-                if (multi_paths.get(id) != null) {
-                    fp = multi_paths.get(id).first;
-                    xys = multi_paths.get(id).second;
-                    mX = xys.get(xys.size() - 1).first;
-                    mY = xys.get(xys.size() - 1).second;
-                    fp.path.lineTo(mX, mY);
-
-                    mPaint.setColor(fp.color);
-                    mPaint.setStrokeWidth(fp.strokeWidth);
-                    mPaint.setMaskFilter(null);
-
-                    if (fp.emboss)
-                        mPaint.setMaskFilter(mEmboss);
-                    else if (fp.blur)
-                        mPaint.setMaskFilter(mBlur);
-                    mCanvas.drawPath(fp.path, mPaint);
-                    multi_paths.remove(id);
-                }
+                //touchUp(id);
                 break;
             default:
                 return false;
         }
         invalidate();
         return true;
-    }
+    }*/
 
     public void setColor(int color) {
         currentColor = color;
