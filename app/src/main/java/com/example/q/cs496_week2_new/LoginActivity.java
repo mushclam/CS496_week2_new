@@ -148,7 +148,7 @@ public class LoginActivity extends AppCompatActivity  {
 
                         @Override
                         public void onError(FacebookException exception) {
-                            // App code
+                            Toast.makeText(getApplicationContext(), "Server isn't Response", Toast.LENGTH_SHORT).show();
                         }
                     });
 
